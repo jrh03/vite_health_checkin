@@ -1,30 +1,41 @@
-import {useState} from "react";
+import {useEffect, useState} from "react";
 import React from "react";
 import CenteredBox from "../components/CenteredBox.tsx";
-import {useLocation, useNavigate} from "react-router-dom";
+import {useNavigate} from "react-router-dom";
 import {useGetAccessToken} from "../helpers/get_token.ts";
+import {useSelector} from "react-redux";
+import type {RootState} from "../redux/store.ts";
+import {selectHospital} from "../redux/hospitalSlice.ts";
+import {setCheckedIn, clearCheckedIn, selectCheckedIn} from "../redux/checkedInSlice.ts";
 
 export const HospitalCheckIn = () => {
-    const location = useLocation();
     const navigate = useNavigate();
     const [currentQ, setCurrentQ] = useState(1);
-
     const accessToken = useGetAccessToken("read:self");
+    const hospital = useSelector((state: RootState) => selectHospital(state));
+    const checkedIn = useSelector((state: RootState) => selectCheckedIn(state));
+
 
     const nextQuestion = () => setCurrentQ(currentQ + 1);
     const prevQuestion = () => setCurrentQ(currentQ - 1);
 
 
-    if (!location.state) {
-        navigate("/");
-    }
+    useEffect(() => {
+        if (!hospital) {
+            navigate("/");
+        }
+        if (checkedIn) {
+            navigate("/queue");
+        }
+    }, [])
+
 
 
     const submitScore = async (num: number) => {
 
         const data = {
             CheckInTime: new Date(),
-            Hospital: location.state.hospital,
+            Hospital: hospital,
             Score: num,
         }
 
@@ -40,6 +51,7 @@ export const HospitalCheckIn = () => {
                     if (response.status !== 201) {
                         console.log('Looks like there was a problem. Status Code: ' + response.status);
                     }
+                    setCheckedIn();
                     navigate("/queue");
 
                 }) // Parse the JSON response
@@ -47,10 +59,6 @@ export const HospitalCheckIn = () => {
                     console.error('Error:', error);
                 });
         return;
-    }
-
-    if (!location.state) {
-        navigate("/");
     }
 
     const handleClick = (num : number) : React.MouseEventHandler<HTMLButtonElement> => async (event) => {
@@ -126,7 +134,7 @@ export const HospitalCheckIn = () => {
     return (
         <CenteredBox>
             <div>
-                <h1 className="text-2xl font-bold">{location.state.hospital.Hospital_Name} Check In</h1>
+                <h1 className="text-2xl font-bold">{hospital && hospital.Hospital_Name} Check In</h1>
                 <Question/>
                 {currentQ > 1 && <button onClick={prevQuestion}>Back</button>}
 

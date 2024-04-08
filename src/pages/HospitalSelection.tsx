@@ -1,30 +1,37 @@
-import React, {useState} from "react";
+import React, {useState, useEffect} from "react";
 import { useNavigate } from "react-router-dom";
 import VerificationInput from "react-verification-input";
 import 'reactjs-popup/dist/index.css';
 import CenteredBox from "../components/CenteredBox.tsx"; // Import css
 import {useAuth0} from "@auth0/auth0-react"
-
-
-interface Hospital {
-    Hospital_Name: string;
-    Code: number;
-}
+import LogoutButton from "../components/auth/LogoutButton.tsx";
+import { useDispatch, useSelector } from 'react-redux';
+import {setHospital, clearHospital, selectHospital} from "../redux/hospitalSlice.ts";
+import type { AppDispatch, RootState } from '../redux/store.ts';
 
 const HospitalSelection = (): React.ReactElement => {
-    const [hospital, setHospital] = useState<Hospital | null>(null);
     const [isFull, setIsFull] = useState(false);
     const requiredLength = 6; // Set the length of your verification input
     const {user} = useAuth0();
+    const dispatch = useDispatch<AppDispatch>();
+    const hospital = useSelector((state: RootState) => selectHospital(state));
+    const checkedIn = useSelector((state: RootState) => state.checkedIn.selectedHospital);
     const navigate = useNavigate();
 
-    const roles_key = import.meta.env.VITE_AUTH0_ROLES_KEY;
+    const roles_key = import.meta.env.VITE_AUTH0_ROLE_KEY;
     const getRoles = (): [string] => {
         if (user) {
             return  user[roles_key];
         }
         return [''];
     }
+
+    useEffect(() => {
+        console.log(hospital)
+        if (hospital) {
+            redirectNextStep();
+        }
+    }, []);
 
 
     const handleChange = (value: string) => {
@@ -46,26 +53,28 @@ const HospitalSelection = (): React.ReactElement => {
                 }
                 else {return response.json();} })
             .then(data => {
-                setHospital(data);
+                dispatch(setHospital(data));
 
             })
             .catch(error => {
-                setHospital(null);
+                dispatch(clearHospital());
                 console.error('Error:', error);
             });
     }
 
-    const redirectToProfile = () => {
+    const redirectNextStep = () => {
         const role = getRoles();
-        console.log(role.includes('Staff'));
 
         if (role.includes('Staff')) {
-            navigate("/dash", {state: {hospital: hospital}});
+            navigate("/dash");
         }
         // Redirect to the profile page
-       else {
-           navigate("/check", {state: {hospital: hospital}});
+       else if (checkedIn) {
+           navigate("/queue");
        }
+       else {
+              navigate("/checkin");
+        }
 
     }
 
@@ -74,37 +83,41 @@ const HospitalSelection = (): React.ReactElement => {
             <div>
                 {hospital && <p> Hospital: {hospital.Hospital_Name}</p> }
                 <p> Is this the hospital you are currently at?</p>
-                <button onClick={redirectToProfile}>Yes</button>
-                <button onClick={() => setHospital(null)}>No</button>
+                <button onClick={redirectNextStep}>Yes</button>
+                <button onClick={() => dispatch(clearHospital())}>No</button>
             </div>
         )
     }
 
     return (
-        <CenteredBox>
-            <div>
-                <div className="flex flex-grow flex-col justify-end">
-                    <h1>Hospital Selection</h1>
-                    <p>Input the Hospital Code on display in the A&E department.</p>
+        <div>
+            <LogoutButton/>
+            <CenteredBox>
+                <div>
+                    <div className="flex flex-grow flex-col justify-end">
+                        <h1>Hospital Selection</h1>
+                        <p>Input the Hospital Code on display in the A&E department.</p>
+                    </div>
+                    <div className="w-full px-4 mt-8">
+                        <VerificationInput
+                            length={6}
+                            validChars={'0-9'}
+                            onChange={handleChange}
+                            onComplete={(value: string) => getHospitalByCode(value)}
+                            inputProps={{inputMode: "numeric"}}
+                            classNames={{
+                                container: "container",
+                                character: "character",
+                                characterInactive: "character--inactive",
+                                characterSelected: "character--selected",
+                                characterFilled: "character--filled",
+                            }}/>
+                        {hospital && isFull ? (<HospitalFound/>) : null}
+                        {isFull && !hospital ? (<p> Hospital not found. Check the code you entered!</p>) : null}
+                    </div>
                 </div>
-                <div className="w-full px-4 mt-8">
-                    <VerificationInput
-                        length={6}
-                        validChars={'0-9'}
-                        onChange={handleChange}
-                        onComplete={(value: string) => getHospitalByCode(value)}
-                        classNames={{
-                            container: "container",
-                            character: "character",
-                            characterInactive: "character--inactive",
-                            characterSelected: "character--selected",
-                            characterFilled: "character--filled",
-                        }}/>
-                    {hospital && isFull ? (<HospitalFound/>) : null}
-                    {isFull && !hospital ? (<p> Hospital not found. Check the code you entered!</p>) : null}
-                </div>
-            </div>
-        </CenteredBox>
+            </CenteredBox>
+        </div>
     );
 
 

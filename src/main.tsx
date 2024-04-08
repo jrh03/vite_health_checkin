@@ -2,6 +2,9 @@ import ReactDOM from 'react-dom/client'
 import './index.css'
 import App from "./App.tsx";
 import {Auth0Provider} from "@auth0/auth0-react";
+import {Provider} from "react-redux";
+import {persistor, store} from "./redux/store.ts";
+import {PersistGate} from "redux-persist/integration/react";
 
 // import Login from "./components/auth/LoginButton.tsx";
 // Check if the environment variable is defined before using it
@@ -26,6 +29,10 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
         useRefreshTokens={true}
         cacheLocation="localstorage"
     >
-        <App />
+        <Provider store={store}>
+            <PersistGate persistor={persistor} loading={null}>
+                <App/>
+            </PersistGate>
+        </Provider>
     </Auth0Provider>
 )
