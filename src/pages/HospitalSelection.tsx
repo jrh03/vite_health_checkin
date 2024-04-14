@@ -14,6 +14,7 @@ import {selectRole} from "../redux/roleSlice.ts";
 
 const HospitalSelection = (): React.ReactElement => {
     const [isFull, setIsFull] = useState(false);
+    const [redirect, setRedirect] = useState(false);
     const requiredLength = 6; // Set the length of your verification input
     const dispatch = useDispatch<AppDispatch>();
     const hospital = useSelector((state: RootState) => selectHospital(state));
@@ -22,13 +23,25 @@ const HospitalSelection = (): React.ReactElement => {
     const navigate = useNavigate();
     const token = useGetAccessToken("read:self");
 
-    console.log(role);
-
     useEffect(() => {
+        const redirectNextStep = () => {
+            if (checkedIn) {
+                navigate("/queue");
+            }
+
+            if (redirect) {
+                if (role === "Staff") {
+                    navigate("/dash");
+                }
+                else {
+                    navigate("/check");
+                }
+            }
+        }
         if (hospital) {
             redirectNextStep();
         }
-    }, [hospital]);
+    }, [hospital, redirect, checkedIn, role, navigate]);
 
     useEffect(() => {
         if (role === "Patient") {
@@ -88,26 +101,12 @@ const HospitalSelection = (): React.ReactElement => {
             });
     }
 
-    const redirectNextStep = () => {
-        if (role === "Staff") {
-            navigate("/dash");
-        }
-        // Redirect to the profile page
-       else if (checkedIn) {
-           navigate("/queue");
-       }
-       else {
-              navigate("/check");
-        }
-
-    }
-
     const HospitalFound = () : React.ReactElement => {
         return (
             <div>
                 {hospital && <p> Hospital: {hospital.Hospital_Name}</p> }
                 <p> Is this the hospital you are currently at?</p>
-                <button onClick={redirectNextStep}>Yes</button>
+                <button onClick={() => setRedirect(true)}>Yes</button>
                 <button onClick={() => dispatch(clearHospital())}>No</button>
             </div>
         )

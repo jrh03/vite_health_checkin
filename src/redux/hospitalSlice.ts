@@ -7,7 +7,7 @@ interface HospitalState {
 }
 
 // Define a type for the Hospital object
-interface Hospital {
+export interface Hospital {
     Hospital_Name: string;
     Code: number;
 }
