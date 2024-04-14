@@ -6,7 +6,9 @@ import {useGetAccessToken} from "../helpers/get_token.ts";
 import {useSelector} from "react-redux";
 import type {RootState} from "../redux/store.ts";
 import {selectHospital} from "../redux/hospitalSlice.ts";
-import {setCheckedIn, clearCheckedIn, selectCheckedIn} from "../redux/checkedInSlice.ts";
+import {setCheckedIn, selectCheckedIn} from "../redux/checkedInSlice.ts";
+import OuterBoxDiv from "../components/OuterBoxDiv.tsx";
+import LogoutButton from "../components/auth/LogoutButton.tsx";
 
 export const HospitalCheckIn = () => {
     const navigate = useNavigate();
@@ -27,7 +29,7 @@ export const HospitalCheckIn = () => {
         if (checkedIn) {
             navigate("/queue");
         }
-    }, [])
+    }, [checkedIn, hospital, navigate])
 
 
 
@@ -132,14 +134,18 @@ export const HospitalCheckIn = () => {
     }
 
     return (
-        <CenteredBox>
-            <div>
-                <h1 className="text-2xl font-bold">{hospital && hospital.Hospital_Name} Check In</h1>
-                <Question/>
-                {currentQ > 1 && <button onClick={prevQuestion}>Back</button>}
+        <div>
+            <LogoutButton/>
+            <OuterBoxDiv>
+                <CenteredBox>
+                    <div>
+                        <h1 className="text-2xl font-bold">{hospital && hospital.Hospital_Name} Check In</h1>
+                        <Question/>
+                        {currentQ > 1 && <button onClick={prevQuestion}>Back</button>}
 
-            </div>
-        </CenteredBox>
+                    </div>
+                </CenteredBox>
+            </OuterBoxDiv>
+        </div>
     )
-
 }

@@ -5,49 +5,63 @@ import type {RootState} from "../redux/store.ts";
 import {selectHospital} from "../redux/hospitalSlice.ts";
 import {useEffect} from "react";
 import {useNavigate} from "react-router-dom";
+import OuterBoxDiv from "../components/OuterBoxDiv.tsx";
+import LogoutButton from "../components/auth/LogoutButton.tsx";
+import {selectCheckedIn} from "../redux/checkedInSlice.ts";
+import {selectRole} from "../redux/roleSlice.ts";
 
 export const QueuePage = () => {
     const accessToken = useGetAccessToken("read:self");
     const hospital = useSelector((state: RootState) => selectHospital(state));
+    const checkedIn = useSelector((state: RootState) => selectCheckedIn(state));
+    const role = useSelector((state: RootState) => selectRole(state));
     const navigate = useNavigate();
+    console.log("Checked IN:" + checkedIn);
+    console.log("Hospital:" + hospital)
+    console.log(hospital)
+    console.log("Role:"  )
+    console.log(role)
+
     useEffect(() => {
-        if (!hospital) {
-            navigate("/");
-            return;
-        }
         if (!accessToken) {
             return;
         }
-        const getPatientsAhead = async () => {
-            try {
-                console.log(accessToken);
-                const response = await fetch('http://localhost:8080/waittime', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${accessToken}`
-                    },
-                    body: JSON.stringify({Hospital: hospital})
-                });
 
-                if (!response.ok) {
-                    throw new Error('Network response was not ok');
-                }
-
-                const data = await response.json();
-                
-                console.log(data);
-
-            } catch (error) {
-                console.error('Error:', error);
+        fetch('http://localhost:8080/waittime', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${accessToken}`
+            },
+            body: JSON.stringify({Hospital: hospital})
+        }).then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
             }
-        };
+            return response.json();
 
-        getPatientsAhead();
-    }, [accessToken, navigate, hospital]); // accessToken is not included here as it's already a dependency
+        }).then(
+            data => {
+                console.log(data);
+            }
+        ).catch(error => {
+            console.error('Error:', error);
+        });
+}, [accessToken]
+)
+    if (!checkedIn || !hospital) {
+        navigate('/');
+    }
 
-    return <CenteredBox>
-        <h1>Queue Page</h1>
-        <p>You are now waiting in the queue and saved in our system.</p>
-    </CenteredBox>
+return (
+    <div>
+    <LogoutButton/>
+    <OuterBoxDiv>
+        <CenteredBox>
+            <h1>Queue Page</h1>
+            <p>You are now waiting in the queue and saved in our system.</p>
+        </CenteredBox>
+    </OuterBoxDiv>
+    </div>
+);
 }

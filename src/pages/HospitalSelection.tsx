@@ -3,35 +3,61 @@ import { useNavigate } from "react-router-dom";
 import VerificationInput from "react-verification-input";
 import 'reactjs-popup/dist/index.css';
 import CenteredBox from "../components/CenteredBox.tsx"; // Import css
-import {useAuth0} from "@auth0/auth0-react"
 import LogoutButton from "../components/auth/LogoutButton.tsx";
 import { useDispatch, useSelector } from 'react-redux';
 import {setHospital, clearHospital, selectHospital} from "../redux/hospitalSlice.ts";
 import type { AppDispatch, RootState } from '../redux/store.ts';
+import {useGetAccessToken} from "../helpers/get_token.ts";
+import OuterBoxDiv from "../components/OuterBoxDiv.tsx";
+import {selectCheckedIn, setCheckedIn} from "../redux/checkedInSlice.ts";
+import {selectRole} from "../redux/roleSlice.ts";
 
 const HospitalSelection = (): React.ReactElement => {
     const [isFull, setIsFull] = useState(false);
     const requiredLength = 6; // Set the length of your verification input
-    const {user} = useAuth0();
     const dispatch = useDispatch<AppDispatch>();
     const hospital = useSelector((state: RootState) => selectHospital(state));
-    const checkedIn = useSelector((state: RootState) => state.checkedIn.selectedHospital);
+    const checkedIn = useSelector((state: RootState) => selectCheckedIn(state));
+    const role = useSelector((state: RootState) => selectRole(state));
     const navigate = useNavigate();
+    const token = useGetAccessToken("read:self");
 
-    const roles_key = import.meta.env.VITE_AUTH0_ROLE_KEY;
-    const getRoles = (): [string] => {
-        if (user) {
-            return  user[roles_key];
-        }
-        return [''];
-    }
+    console.log(role);
 
     useEffect(() => {
-        console.log(hospital)
         if (hospital) {
             redirectNextStep();
         }
-    }, []);
+    }, [hospital]);
+
+    useEffect(() => {
+        if (role === "Patient") {
+            fetch('http://localhost:8080/ischecked', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                }
+            })
+                .then(response => {
+                    if (response.status !== 200) {
+                        console.log('Looks like there was a problem. Status Code: ' + response.status);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('Success:', data);
+                    console.log(data['Hospital'])
+                    if (data) {
+                        dispatch(setHospital(data['Hospital']));
+                        dispatch(setCheckedIn());
+                    }
+                })// Parse the JSON response
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+        }
+    }, [dispatch, role, token]);
 
 
     const handleChange = (value: string) => {
@@ -63,9 +89,7 @@ const HospitalSelection = (): React.ReactElement => {
     }
 
     const redirectNextStep = () => {
-        const role = getRoles();
-
-        if (role.includes('Staff')) {
+        if (role === "Staff") {
             navigate("/dash");
         }
         // Redirect to the profile page
@@ -73,7 +97,7 @@ const HospitalSelection = (): React.ReactElement => {
            navigate("/queue");
        }
        else {
-              navigate("/checkin");
+              navigate("/check");
         }
 
     }
@@ -92,31 +116,33 @@ const HospitalSelection = (): React.ReactElement => {
     return (
         <div>
             <LogoutButton/>
-            <CenteredBox>
-                <div>
-                    <div className="flex flex-grow flex-col justify-end">
-                        <h1>Hospital Selection</h1>
-                        <p>Input the Hospital Code on display in the A&E department.</p>
+            <OuterBoxDiv>
+                <CenteredBox>
+                    <div>
+                        <div className="flex flex-grow flex-col justify-end">
+                            <h1>Hospital Selection</h1>
+                            <p>Input the Hospital Code on display in the A&E department.</p>
+                        </div>
+                        <div className="w-full px-4 mt-8">
+                            <VerificationInput
+                                length={6}
+                                validChars={'0-9'}
+                                onChange={handleChange}
+                                onComplete={(value: string) => getHospitalByCode(value)}
+                                inputProps={{inputMode: "numeric"}}
+                                classNames={{
+                                    container: "container",
+                                    character: "character",
+                                    characterInactive: "character--inactive",
+                                    characterSelected: "character--selected",
+                                    characterFilled: "character--filled",
+                                }}/>
+                            {hospital && isFull ? (<HospitalFound/>) : null}
+                            {isFull && !hospital ? (<p> Hospital not found. Check the code you entered!</p>) : null}
+                        </div>
                     </div>
-                    <div className="w-full px-4 mt-8">
-                        <VerificationInput
-                            length={6}
-                            validChars={'0-9'}
-                            onChange={handleChange}
-                            onComplete={(value: string) => getHospitalByCode(value)}
-                            inputProps={{inputMode: "numeric"}}
-                            classNames={{
-                                container: "container",
-                                character: "character",
-                                characterInactive: "character--inactive",
-                                characterSelected: "character--selected",
-                                characterFilled: "character--filled",
-                            }}/>
-                        {hospital && isFull ? (<HospitalFound/>) : null}
-                        {isFull && !hospital ? (<p> Hospital not found. Check the code you entered!</p>) : null}
-                    </div>
-                </div>
-            </CenteredBox>
+                </CenteredBox>
+            </OuterBoxDiv>
         </div>
     );
 
