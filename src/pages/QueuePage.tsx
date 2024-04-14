@@ -4,7 +4,6 @@ import {useSelector} from "react-redux";
 import type {RootState} from "../redux/store.ts";
 import {selectHospital} from "../redux/hospitalSlice.ts";
 import {useEffect} from "react";
-import {useNavigate} from "react-router-dom";
 import OuterBoxDiv from "../components/OuterBoxDiv.tsx";
 import LogoutButton from "../components/auth/LogoutButton.tsx";
 import {selectCheckedIn} from "../redux/checkedInSlice.ts";
@@ -15,7 +14,6 @@ export const QueuePage = () => {
     const hospital = useSelector((state: RootState) => selectHospital(state));
     const checkedIn = useSelector((state: RootState) => selectCheckedIn(state));
     const role = useSelector((state: RootState) => selectRole(state));
-    const navigate = useNavigate();
     console.log("Checked IN:" + checkedIn);
     console.log("Hospital:" + hospital)
     console.log(hospital)
@@ -47,11 +45,8 @@ export const QueuePage = () => {
         ).catch(error => {
             console.error('Error:', error);
         });
-}, [accessToken]
+}, [accessToken, hospital]
 )
-    if (!checkedIn || !hospital) {
-        navigate('/');
-    }
 
 return (
     <div>

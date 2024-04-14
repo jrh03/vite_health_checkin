@@ -26,6 +26,9 @@ const HospitalSelection = (): React.ReactElement => {
     useEffect(() => {
         const redirectNextStep = () => {
             if (checkedIn) {
+                if (role === "Staff") {
+                    navigate("/dash");
+                }
                 navigate("/queue");
             }
 

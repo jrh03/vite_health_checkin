@@ -23,9 +23,6 @@ export const HospitalCheckIn = () => {
 
 
     useEffect(() => {
-        if (!hospital) {
-            navigate("/");
-        }
         if (checkedIn) {
             navigate("/queue");
         }

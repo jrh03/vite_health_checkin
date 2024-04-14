@@ -1,4 +1,4 @@
-import { configureStore, combineReducers, UnknownAction} from '@reduxjs/toolkit';
+import { configureStore, combineReducers} from '@reduxjs/toolkit';
 import {persistStore, persistReducer} from 'redux-persist';
 import storage from 'redux-persist/lib/storage'; // defaults to localStorage for web
 import hospitalReducer from './hospitalSlice.ts';
@@ -12,7 +12,7 @@ const appReducer = combineReducers({
     role: roleReducer,
 });
 
-// @ts-ignore
+// @ts-expect-error  State and Action are not defined
 const rootReducer = (state, action) => {
     if (action.type === 'reset') {
         state = undefined;
