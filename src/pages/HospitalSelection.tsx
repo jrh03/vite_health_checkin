@@ -25,10 +25,10 @@ const HospitalSelection = (): React.ReactElement => {
 
     useEffect(() => {
         const redirectNextStep = () => {
+            if (role === "Staff") {
+                navigate("/dash");
+            }
             if (checkedIn) {
-                if (role === "Staff") {
-                    navigate("/dash");
-                }
                 navigate("/queue");
             }
 
@@ -37,7 +37,7 @@ const HospitalSelection = (): React.ReactElement => {
                     navigate("/dash");
                 }
                 else {
-                    navigate("/check");
+                    navigate("/checkin");
                 }
             }
         }
@@ -48,7 +48,7 @@ const HospitalSelection = (): React.ReactElement => {
 
     useEffect(() => {
         if (role === "Patient") {
-            fetch('http://localhost:8080/ischecked', {
+            fetch(import.meta.env.VITE_API_URL + '/patient-current-patient', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -87,7 +87,7 @@ const HospitalSelection = (): React.ReactElement => {
 
 
     const getHospitalByCode = (value: string)  => {
-        fetch('http://localhost:8080/hospital/' + value)
+        fetch(import.meta.env.VITE_API_URL + '/hospital/' + value)
             .then(
                 response =>
                 {if (response.status !== 200) {

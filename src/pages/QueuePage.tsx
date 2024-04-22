@@ -27,7 +27,7 @@ export const QueuePage = () => {
                 return;
             }
             const fetchData = () => {
-                fetch('http://localhost:8080/waittime', {
+                fetch(import.meta.env.VITE_API_URL + '/current-patient-wait', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',

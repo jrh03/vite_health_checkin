@@ -38,7 +38,7 @@ export const HospitalCheckIn = () => {
             Score: num,
         }
 
-            fetch('http://localhost:8080/checkin', {
+            fetch(import.meta.env.VITE_API_URL + '/current-patient-checkin', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
